@@ -213,7 +213,7 @@ RECURSIVE              = YES
 # need to set EXTENSION_MAPPING for the extension otherwise the files are not
 # properly processed by doxygen.
 
-FILTER_PATTERNS        = *.cls=./cachefilter.py
+FILTER_PATTERNS        = *.cls="python cachefilter.py
 
 # If the USE_MDFILE_AS_MAINPAGE tag refers to the name of a markdown file that
 # is part of the input, its contents will be placed on the main page

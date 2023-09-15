@@ -4,7 +4,7 @@ import sys
 
 # Ensure proper command-line usage
 if len(sys.argv) < 2:
-    print("Usage: python objectscript_to_cpp.py <input-file> [--debug]")
+    print("Usage: python cachefilter.py <input-file> [--debug]")
     sys.exit(1)
 
 input_file = sys.argv[1]
@@ -477,7 +477,7 @@ def handle_storage(line):
 
 with open(input_file, 'r', encoding='utf-8') as file:
     for line in file:
-        line = line.replace("\t", " " * intendation).replace(" ; ", "///s").replace("#; ", "///s")
+        line = line.replace("\t", " " * intendation).replace(" ; ", "/// ").replace("#; ", "/// ")
         if line.startswith("Class "):
             inside_class_block = True
             handle_class(line)
@@ -576,7 +576,7 @@ with open(input_file, 'r', encoding='utf-8') as file:
                 if private_content.strip() != "private:":
                     class_content = append_line(class_content, private_content + "\n", False)
                 if comments.strip() != "":
-                    class_content = append_line(class_content, comments + "\n", False)
+                    file_content = append_line(file_content, comments + "\n", False)
                 #print(f"Class Content: {class_content}")
                 #print(f"Public Content: {public_content}")
                 #print(f"Private Content: {private_content}")
@@ -596,16 +596,16 @@ with open(input_file, 'r', encoding='utf-8') as file:
                     comments = append_line(comments, comment + "\n", False)
                     #print (f"Comment: {comment}")
                 elif inside_comment_block:
-                    comment = line.strip()
+                    comment = line.strip().strip("\n")
                     if comment:
-                        if comment.startswith("*"):
-                            comment = comment.replace("*", "///")
-                            comments = append_line(comments, comment + "\n", False)
-                            #print (f"Comment: {comment}")
-                        elif comment.startswith("*/"):
+                        if "*/" in comment:
                             comment = comment.replace("*/", "///")
                             inside_comment_block = False
                             comments = append_line(comments, comment, False)
+                            #print (f"Comment: {comment}")
+                        elif comment.startswith("*"):
+                            comment = comment.replace("*", "///")
+                            comments = append_line(comments, comment + "\n", False)
                             #print (f"Comment: {comment}")
                         else:
                             comments = append_line(comments, "/// " + comment + "\n", False)

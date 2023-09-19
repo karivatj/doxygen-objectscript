@@ -84,16 +84,16 @@ def extract_additional_data(line):
                 type = data.pop(0).strip().strip(";")
                 if "(" in type:
                     member_additional_data = (type + " " + (" ".join(data))).split("(")[1].split(")")[0].strip().split(", ")
-                    result += "/// Member Additional Data:\n"
-                    result += "".join([f"/// > {d.strip()}\n" for d in member_additional_data])
+                    result += "/// Member Additional Data:<br>\n"
+                    result += "".join([f"/// > {d.strip()}<br>\n" for d in member_additional_data])
                     data = " ".join(data).split(")")
                     data.pop(0)
                     if data: # if we still have data left to process
                         part = data.pop(0).strip()
                         if "[" in part:
                             member_keyword_data = (part + " " + (" ".join(data))).split("[")[1].split("]")[0].strip().split(", ")
-                            result += "/// Member Keyword Data:\n"
-                            result += "".join([f"/// > {d.strip()}\n" for d in member_keyword_data])
+                            result += "/// Member Keyword Data:<br>\n"
+                            result += "".join([f"/// > {d.strip()}<br>\n" for d in member_keyword_data])
             elif "[" in part:
                 member_keyword_data = (part + " " + (" ".join(data))).split("[")[1].split("]")[0].strip().split(", ")
                 result += "/// Member Keyword Data:\n"
@@ -107,8 +107,8 @@ def extract_additional_data(line):
                 part = data.pop(0).strip()
                 if "[" in part:
                     member_keyword_data = (part + " " + (" ".join(data))).split("[")[1].split("]")[0].strip().split(", ")
-                    result += "/// Member Keyword Data:\n"
-                    result += "".join([f"/// > {d.strip()}\n" for d in member_keyword_data])
+                    result += "/// Member Keyword Data:<br>\n"
+                    result += "".join([f"/// > {d.strip()}<br>\n" for d in member_keyword_data])
     elif "Index" in type:
         name = data.pop(0)
         data = " ".join(data).strip()
@@ -119,17 +119,17 @@ def extract_additional_data(line):
         else:
             member_keyword_data = None
         if member_additional_data:
-            result += f"/// Member additional data:\n"
-            result += f"/// > {member_additional_data}\n"
+            result += f"/// Member additional data:<br>\n"
+            result += f"/// > {member_additional_data}<br>\n"
         if member_keyword_data:
-            result += f"/// Member keyword data:\n"
-            result += "".join([f"/// > {d.strip()}\n" for d in member_keyword_data])
+            result += f"/// Member keyword data:<br>\n"
+            result += "".join([f"/// > {d.strip()}<br>\n" for d in member_keyword_data])
     elif "XData" in type:
         data = " ".join(data).strip()
         if "[" in data:
             member_keyword_data = data.split("[")[1].split("]")[0].split(", ")
-            result += f"/// Member keyword data:\n"
-            result += "".join([f"/// > {d.strip()}\n" for d in member_keyword_data])
+            result += f"/// Member keyword data:<br>\n"
+            result += "".join([f"/// > {d.strip()}<br>\n" for d in member_keyword_data])
     else:
         raise Exception(f"Unknown type: {type}")
     return result
@@ -233,14 +233,18 @@ def format_xdata_signature(line):
     return signature
 
 def handle_xdata_mimetype(line):
+    #print(f"Looking for XData Mimetype in line: {line.strip()}")
     mimetype = line.split("[")
-    if len(xdata_mimetype) > 1:
-        if "MimeType" in xdata_mimetype[1]:
-            mimetype = xdata_mimetype[1].split("MimeType = ")[1].split("]")[0].strip()
+    if len(mimetype) > 1:
+        if "MimeType" in mimetype[1]:
+            mimetype = mimetype[1].split("MimeType = ")[1].split("]")[0].strip()
+            #print(f"XData Mimetype resolved: {mimetype}")
         else:
             mimetype = "application/xml"
     else:
         mimetype = "application/xml" # Default mimetype if no mimetype is found
+        #print(f"Using default mimetype: {mimetype}")
+
     return mimetype
 
 def handle_class(line):
@@ -432,11 +436,15 @@ def handle_xdata(line):
     global inside_xdata_css_content
     global xdata_content
     global public_content
+    global xdata_mimetype
     if line.startswith("{"):
         if not inside_xdata_content:
             inside_xdata_content = True
             xdata_content += f"/// XData content:\n"
-            xdata_content += f"/// @verbatim\n"            
+            xdata_content += f"/// ```\n"  
+        elif xdata_mimetype in "application/json":
+            line = line.strip("\n") # Remove possible newline at the end of the line
+            xdata_content += f"/// {line}\n"
     elif line.startswith("<style"):
         inside_xdata_css_content = True
         line = line.strip("\n") # Remove possible newline at the end of the line
@@ -456,7 +464,7 @@ def handle_xdata(line):
         else:
             inside_xdata_content = False
             inside_xdata_block = False
-            xdata_content += f"/// @endverbatim\n"
+            xdata_content += f"/// ```\n"
             xdata_content += f"{xdata_signature}"
             xdata_content = "\n".join([(" ") * intendation + l for l in xdata_content.strip().split('\n')]) # Indent content
             public_content = append_line(public_content, xdata_content + "\n\n", False)

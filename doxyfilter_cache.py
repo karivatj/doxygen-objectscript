@@ -1,21 +1,64 @@
-#!/usr/bin/python3
+"""
+@file doxyfilter-cache.py
+
+Doxygen Filter for Cache ObjectScript
+
+This Python script serves as a Doxygen filter for parsing and converting Cache ObjectScript code into quasi-C++ code with Doxygen comments.
+The filtered code can then be used for generating documentation using Doxygen.
+
+Usage:
+  python doxyfilter-cache.py <input-file> [--debug]
+
+Arguments:
+  - <input-file>: The path to the input Cache ObjectScript file to be filtered.
+  - [--debug]: Optional flag to enable debugging mode. If specified, the filtered code will be saved to an output file.
+
+Filtering Process:
+- The script parses Cache ObjectScript code and identifies classes, methods, properties, parameters, indexes, and XData blocks.
+- It generates C++-like code with Doxygen comments to provide documentation for each code element.
+- The generated code can be used with Doxygen to generate documentation.
+
+Global Flags and Variables:
+- Global flags are used to track the context while parsing the code.
+- Global variables store the content for different code elements.
+
+Regular Expressions:
+- The script uses regular expressions to match and extract comments and comment characters from the code.
+
+Functions:
+- append_line(target, line, indent=True): Appends a line to the target string with optional indentation.
+- convert_type(type): Converts Cache ObjectScript data types to C++ data types.
+- extract_additional_data(line): Extracts additional data (metadata) from a line of code.
+- check_keyword(line, keyword): Checks if a keyword is present in a line of code.
+- format_method_signature(line): Formats the signature of a method.
+- format_xdata_signature(line): Formats the signature of an XData block.
+- handle_xdata_mimetype(line): Handles the MIME type of an XData block.
+- handle_class(line): Handles the definition of a class.
+- handle_param_type(line): Determines the C++ data type for a parameter.
+- handle_param_or_property(line): Handles parameters and properties.
+- handle_index(line): Handles index definitions.
+- handle_method(line): Handles method definitions.
+- handle_xdata(line): Handles XData blocks.
+- handle_storage(line): Handles Storage blocks.
+- parse(input_file): Main function to parse the input Cache ObjectScript file.
+
+Command-Line Usage:
+- The script can be run from the command line with the following parameters:
+  - <input-file>: The path to the Cache ObjectScript input file to be filtered.
+  - [--debug]: Optional flag to enable debugging mode. If specified, the filtered code is saved to an output file.
+
+Output:
+- The filtered and formatted code is generated and can be saved to an output file or displayed on the console.
+- When used with Doxygen, this code generates documentation for Cache ObjectScript code.
+
+Note:
+- This script is intended to be used as a preprocessor with Doxygen for documenting Cache ObjectScript code.
+"""
+
 import re
 import sys
 
-# Ensure proper command-line usage
-if len(sys.argv) < 2:
-    print("Usage: python cachefilter.py <input-file> [--debug]")
-    sys.exit(1)
-
-input_file = sys.argv[1]
-debug_flag = sys.argv[2] if len(sys.argv) > 2 else None
-output_file = test = "./output/" + input_file.split("/")[-1].split(".")[0] + ".cpp"
-
-if debug_flag is not None and debug_flag in "--debug":
-    debug = True
-else:
-    debug = False
-
+# Global flags
 inside_class_block = False
 inside_classmethod_block = False
 inside_method_block = False
@@ -25,7 +68,10 @@ inside_comment_block = False
 inside_xdata_block = False
 inside_xdata_content = False
 inside_xdata_css_content = False
+private_method = False
+abstract_method = False
 
+# Global variables for storing content
 file_content = ""
 class_content = ""
 method_content = ""
@@ -36,13 +82,10 @@ property_content = ""
 xdata_content = ""
 index_content = ""
 comments = ""
-
-private_method = False
-abstract_method = False
 xdata_mimetype = ""
-
 public_content = "public:\n\n"
 private_content = "private:\n\n"
+
 intendation = 4
 
 # Regular expressions
@@ -51,15 +94,38 @@ comment_pattern = re.compile(r'((?://[^\n]*)|(/\*.*?\*/))', re.DOTALL)
 # Match only the comment characters // /* /// //// etc
 comment_chars_pattern = re.compile(r'((?://+))', re.DOTALL)
 
-def append_line(target, line, indent = True):
+def append_line(target, line, indent=True):
+    """
+    Appends a line of text to the target string, with optional indentation.
+
+    Args:
+        target (str): The target string to which the line will be appended.
+        line (str): The line of text to be appended to the target.
+        indent (bool, optional): Whether to apply indentation before appending the line. Defaults to True.
+
+    Returns:
+        str: The updated target string with the appended line.
+    """
     global intendation
+
     if indent:
         target += (" " * intendation) + line
     else:
         target += line
+
     return target
 
+
 def convert_type(type):
+    """
+    Converts a basic type string to its corresponding format.
+
+    Args:
+        type (str): The input type string to be converted.
+
+    Returns:
+        str: The converted type string.
+    """
     # Convert basic types
     if type in "STRING":
         type = "%String"
@@ -70,6 +136,18 @@ def convert_type(type):
     return type
 
 def extract_additional_data(line):
+    """
+    Extracts additional data and keyword data from a line of code.
+
+    Args:
+        line (str): The input line of code to extract data from.
+
+    Returns:
+        str: A formatted string containing extracted data.
+
+    Raises:
+        Exception: If an unknown type is encountered in the input line.
+    """    
     result = ""
     member_keyword_data = ""
     member_additional_data = ""
@@ -135,6 +213,19 @@ def extract_additional_data(line):
     return result
 
 def check_keyword(line, keyword):
+    """
+    Checks if a given keyword is present in a line of code.
+
+    Args:
+        line (str): The input line of code to check for the keyword.
+        keyword (str): The keyword to check for.
+
+    Returns:
+        bool: True if the keyword is found, False otherwise.
+
+    Raises:
+        Exception: If an unknown type is encountered in the input line.
+    """
     #print (f"Checking for keyword: {keyword} from line {line}")
     keywords = ""
     data = line.replace(" as ", " As ").strip().split()
@@ -175,6 +266,18 @@ def check_keyword(line, keyword):
         return False
 
 def format_method_signature(line):
+    """
+    Formats a method signature line into a standard format.
+
+    Args:
+        line (str): The input line containing a method signature.
+
+    Returns:
+        str: The formatted method signature.
+
+    Raises:
+        Exception: If an invalid method signature is encountered.
+    """
     signature = ""
     line = line.strip().replace(" as ", " As ")
     #print(f"Parsing method signature: {line}")
@@ -219,6 +322,18 @@ def format_method_signature(line):
     return signature
 
 def format_xdata_signature(line):
+    """
+    Formats an XData signature line into a standard format.
+
+    Args:
+        line (str): The input line containing an XData signature.
+
+    Returns:
+        str: The formatted XData signature.
+
+    Raises:
+        Exception: If an invalid XData signature is encountered.
+    """    
     signature = ""
     type = "XData"
     name = ""
@@ -233,6 +348,18 @@ def format_xdata_signature(line):
     return signature
 
 def handle_xdata_mimetype(line):
+    """
+    Extracts the Mimetype value from an XData line.
+
+    Args:
+        line (str): The input line containing XData information.
+
+    Returns:
+        str: The extracted Mimetype value.
+
+    Note:
+        If no Mimetype is found, it defaults to "application/xml".
+    """
     #print(f"Looking for XData Mimetype in line: {line.strip()}")
     mimetype = line.split("[")
     if len(mimetype) > 1:
@@ -248,6 +375,13 @@ def handle_xdata_mimetype(line):
     return mimetype
 
 def handle_class(line):
+    """
+    Handles the parsing of a 'Class' line.
+
+    Args:
+        line (str): The input line containing 'Class' information.
+
+    """
     global public_content
     global class_content
     class_full_name = line.split(" ")[1]
@@ -269,6 +403,15 @@ def handle_class(line):
     class_content = class_definition + "\n"
 
 def handle_param_type(line):
+    """
+    Handles the parsing of a parameter type from a line.
+
+    Args:
+        line (str): The input line containing parameter information.
+
+    Returns:
+        str: The parsed parameter type.
+    """
     type = "%String" # Default value
     try:
         if line in ["0", "1"]:
@@ -281,6 +424,12 @@ def handle_param_type(line):
     return type
 
 def handle_param_or_property(line):
+    """
+    Handles the parsing of parameter or property lines.
+
+    Args:
+        line (str): The input line containing parameter or property information.
+    """
     global parameter_content
     global property_content
     global public_content
@@ -363,6 +512,12 @@ def handle_param_or_property(line):
         property_content = ""
 
 def handle_index(line):
+    """
+    Handles the parsing of an 'Index' line.
+
+    Args:
+        line (str): The input line containing 'Index' information.
+    """
     global index_content
     global public_content
 
@@ -385,6 +540,12 @@ def handle_index(line):
     index_content = ""
 
 def handle_method(line):
+    """
+    Handles the parsing of method lines.
+
+    Args:
+        line (str): The input line containing method information.
+    """
     global inside_method_block
     global inside_classmethod_block
     global method_content
@@ -431,6 +592,12 @@ def handle_method(line):
             method_content = append_line(method_content, comment + "\n", True)
 
 def handle_xdata(line):
+    """
+    Handles the parsing of XData lines.
+
+    Args:
+        line (str): The input line containing XData information.
+    """
     global inside_xdata_block
     global inside_xdata_content
     global inside_xdata_css_content
@@ -474,6 +641,12 @@ def handle_xdata(line):
         return
 
 def handle_storage(line):
+    """
+    Handles the parsing of 'Storage' lines.
+
+    Args:
+        line (str): The input line containing 'Storage' information.
+    """
     global inside_storage_block
     if line.startswith("{"):
         return
@@ -483,156 +656,198 @@ def handle_storage(line):
     else:
         return
 
-with open(input_file, 'r', encoding='utf-8') as file:
-    for line in file:
-        line = line.replace("\t", " " * intendation).replace(" ; ", "/// ").replace("#; ", "/// ")
-        if line.startswith("Class "):
-            inside_class_block = True
-            handle_class(line)
-            continue
-        elif line.startswith("Include "):
-            line = "/// " + line.strip() + "\n"
-            file_content = append_line(file_content, line, False)
-            continue
-        elif inside_xdata_block:
-            handle_xdata(line)
-            continue
-        elif inside_storage_block:
-            handle_storage(line)
-            continue
-        elif inside_classmethod_block:
-            handle_method(line)
-            continue
-        elif inside_method_block:
-            handle_method(line)
-            continue
-        elif inside_class_block:
-            if line.startswith("Property "):
-                if comments.strip() != "":
-                    property_content = append_line(property_content, comments, False)
-                    comments = ""
-                handle_param_or_property(line)
-                continue
-            elif line.startswith("Parameter "):
-                if comments.strip() != "":
-                    parameter_content = append_line(parameter_content, comments, False)
-                    comments = ""
-                handle_param_or_property(line)
-                continue
-            elif line.startswith("Index "):
-                if comments.strip() != "":
-                    method_content = append_line(method_content, comments, False)
-                    comments = ""
-                handle_index(line)
-                continue
-            elif line.startswith("ClassMethod "):
-                inside_classmethod_block = True
-                private_method = check_keyword(line, "Private")
+def parse(input_file):
+    """
+    Parses the input file and generates a quasi-C++ content.
 
-                if comments.strip() != "":
-                    method_content = append_line(method_content, comments, False)
-                    comments = ""
-                
-                additional_data = extract_additional_data(line)
-                if additional_data.strip() != "":
-                    method_content = append_line(method_content, additional_data, False)
+    Args:
+        input_file (str): The path to the input file to be parsed.
+    """
+    global inside_xdata_block
+    global inside_class_block
+    global inside_storage_block
+    global inside_classmethod_block
+    global inside_method_block
+    global inside_comment_block
+    global method_content
+    global method_signature
+    global xdata_content
+    global xdata_signature
+    global parameter_content
+    global property_content
+    global class_content
+    global file_content
+    global public_content
+    global private_content
+    global comments
+    with open(input_file, 'r', encoding='utf-8') as file:
+        for line in file:
+            line = line.replace("\t", " " * intendation).replace(" ; ", "/// ").replace("#; ", "/// ")
+            if line.startswith("Class "):
+                inside_class_block = True
+                handle_class(line)
+                continue
+            elif line.startswith("Include "):
+                line = "/// " + line.strip() + "\n"
+                file_content = append_line(file_content, line, False)
+                continue
+            elif inside_xdata_block:
+                handle_xdata(line)
+                continue
+            elif inside_storage_block:
+                handle_storage(line)
+                continue
+            elif inside_classmethod_block:
+                handle_method(line)
+                continue
+            elif inside_method_block:
+                handle_method(line)
+                continue
+            elif inside_class_block:
+                if line.startswith("Property "):
+                    if comments.strip() != "":
+                        property_content = append_line(property_content, comments, False)
+                        comments = ""
+                    handle_param_or_property(line)
+                    continue
+                elif line.startswith("Parameter "):
+                    if comments.strip() != "":
+                        parameter_content = append_line(parameter_content, comments, False)
+                        comments = ""
+                    handle_param_or_property(line)
+                    continue
+                elif line.startswith("Index "):
+                    if comments.strip() != "":
+                        method_content = append_line(method_content, comments, False)
+                        comments = ""
+                    handle_index(line)
+                    continue
+                elif line.startswith("ClassMethod "):
+                    inside_classmethod_block = True
+                    private_method = check_keyword(line, "Private")
 
-                method_signature = format_method_signature(line)
-                method_content = append_line(method_content, method_signature + "\n", False)
-                continue
-            elif line.startswith("Method ") or line.startswith("ClientMethod "):
-                inside_method_block = True
-                abstract_method = check_keyword(line, "Abstract")
-                private_method = check_keyword(line, "Private")
-                
-                if comments.strip() != "":
-                    method_content = append_line(method_content, comments, False)
-                    comments = ""
-                
-                if line.startswith("ClientMethod "):
-                    remark = "///This method is a ClientMethod. Any instance method defined with the keyword ClientMethod\n" \
-                                "///becomes a client-side instance method of the client page object.\n" \
-                                "///When called, it executes within the browser.\n"
-                    method_content = append_line(method_content, remark, False)
-                
-                additional_data = extract_additional_data(line)
-                if additional_data.strip() != "":
-                    method_content = append_line(method_content, additional_data, False)
-                
-                method_signature = format_method_signature(line)                    
-                method_content = append_line(method_content, method_signature + "\n", False)
-                continue
-            elif line.startswith("XData "):
-                inside_xdata_block = True
-                xdata_mimetype = handle_xdata_mimetype(line)
-                xdata_signature = format_xdata_signature(line)
-                if comments.strip() != "":
-                    xdata_content = append_line(xdata_content, comments, False)
-                comments = ""
+                    if comments.strip() != "":
+                        method_content = append_line(method_content, comments, False)
+                        comments = ""
+                    
+                    additional_data = extract_additional_data(line)
+                    if additional_data.strip() != "":
+                        method_content = append_line(method_content, additional_data, False)
 
-                additional_data = extract_additional_data(line)
-                if additional_data.strip() != "":
-                    xdata_content = append_line(xdata_content, additional_data, False)
-                continue
-            elif line.startswith("Storage "):
-                inside_storage_block = True
-                continue
-            elif line.startswith("}"):
-                inside_class_block = False
-                if public_content.strip() != "public:":
-                    class_content = append_line(class_content, public_content + "\n", False)
-                if private_content.strip() != "private:":
-                    class_content = append_line(class_content, private_content + "\n", False)
-                if comments.strip() != "":
-                    file_content = append_line(file_content, comments + "\n", False)
-                #print(f"Class Content: {class_content}")
-                #print(f"Public Content: {public_content}")
-                #print(f"Private Content: {private_content}")
-                class_content = append_line(class_content, line, False)
-                file_content = append_line(file_content, class_content, False)
-                break
-            else:
-                comment  = ""
-                match = comment_pattern.search(line)
-                if match:
-                    comment = match.group(0)
-                    comments = append_line(comments, comment + "\n", False)
-                    #print (f"Comment: {comment}")
-                elif line.startswith("/*"):
-                    comment = line.strip().replace("/*", "///")
-                    inside_comment_block = True
-                    comments = append_line(comments, comment + "\n", False)
-                    #print (f"Comment: {comment}")
-                elif inside_comment_block:
-                    comment = line.strip().strip("\n")
-                    if comment:
-                        if "*/" in comment:
-                            comment = comment.replace("*/", "///")
-                            inside_comment_block = False
-                            comments = append_line(comments, comment, False)
-                            #print (f"Comment: {comment}")
-                        elif comment.startswith("*"):
-                            comment = comment.replace("*", "///")
-                            comments = append_line(comments, comment + "\n", False)
-                            #print (f"Comment: {comment}")
-                        else:
-                            comments = append_line(comments, "/// " + comment + "\n", False)
-                            #print (f"Comment: {comment}")
+                    method_signature = format_method_signature(line)
+                    method_content = append_line(method_content, method_signature + "\n", False)
+                    continue
+                elif line.startswith("Method ") or line.startswith("ClientMethod "):
+                    inside_method_block = True
+                    abstract_method = check_keyword(line, "Abstract")
+                    private_method = check_keyword(line, "Private")
+                    
+                    if comments.strip() != "":
+                        method_content = append_line(method_content, comments, False)
+                        comments = ""
+                    
+                    if line.startswith("ClientMethod "):
+                        remark = "///This method is a ClientMethod. Any instance method defined with the keyword ClientMethod\n" \
+                                    "///becomes a client-side instance method of the client page object.\n" \
+                                    "///When called, it executes within the browser.\n"
+                        method_content = append_line(method_content, remark, False)
+                    
+                    additional_data = extract_additional_data(line)
+                    if additional_data.strip() != "":
+                        method_content = append_line(method_content, additional_data, False)
+                    
+                    method_signature = format_method_signature(line)                    
+                    method_content = append_line(method_content, method_signature + "\n", False)
+                    continue
+                elif line.startswith("XData "):
+                    inside_xdata_block = True
+                    xdata_mimetype = handle_xdata_mimetype(line)
+                    xdata_signature = format_xdata_signature(line)
+                    if comments.strip() != "":
+                        xdata_content = append_line(xdata_content, comments, False)
+                    comments = ""
+
+                    additional_data = extract_additional_data(line)
+                    if additional_data.strip() != "":
+                        xdata_content = append_line(xdata_content, additional_data, False)
+                    continue
+                elif line.startswith("Storage "):
+                    inside_storage_block = True
+                    continue
+                elif line.startswith("}"):
+                    inside_class_block = False
+                    if public_content.strip() != "public:":
+                        class_content = append_line(class_content, public_content + "\n", False)
+                    if private_content.strip() != "private:":
+                        class_content = append_line(class_content, private_content + "\n", False)
+                    if comments.strip() != "":
+                        file_content = append_line(file_content, comments + "\n", False)
+                    #print(f"Class Content: {class_content}")
+                    #print(f"Public Content: {public_content}")
+                    #print(f"Private Content: {private_content}")
+                    class_content = append_line(class_content, line, False)
+                    file_content = append_line(file_content, class_content, False)
+                    break
                 else:
-                    line = line.strip()
-                    if line:
-                        class_content += line + "\n"
+                    comment  = ""
+                    match = comment_pattern.search(line)
+                    if match:
+                        comment = match.group(0)
+                        comments = append_line(comments, comment + "\n", False)
+                        #print (f"Comment: {comment}")
+                    elif line.startswith("/*"):
+                        comment = line.strip().replace("/*", "///")
+                        inside_comment_block = True
+                        comments = append_line(comments, comment + "\n", False)
+                        #print (f"Comment: {comment}")
+                    elif inside_comment_block:
+                        comment = line.strip().strip("\n")
+                        if comment:
+                            if "*/" in comment:
+                                comment = comment.replace("*/", "///")
+                                inside_comment_block = False
+                                comments = append_line(comments, comment, False)
+                                #print (f"Comment: {comment}")
+                            elif comment.startswith("*"):
+                                comment = comment.replace("*", "///")
+                                comments = append_line(comments, comment + "\n", False)
+                                #print (f"Comment: {comment}")
+                            else:
+                                comments = append_line(comments, "/// " + comment + "\n", False)
+                                #print (f"Comment: {comment}")
                     else:
-                        if comments.strip() != "":
-                            file_content = append_line(file_content, comments, False)
-                            comments = ""
-            continue
-        else:
-            file_content += line
-if debug:
-    with open(output_file, "w", encoding="utf-8") as file:
-        print(f"Writing filtered ObjectScript to file: {output_file}")
-        file.write(file_content)
-else:
-    sys.stdout.buffer.write(file_content.encode('utf-8'))
-    sys.stdout.flush()
+                        line = line.strip()
+                        if line:
+                            class_content += line + "\n"
+                        else:
+                            if comments.strip() != "":
+                                file_content = append_line(file_content, comments, False)
+                                comments = ""
+                continue
+            else:
+                file_content += line
+
+if __name__ == "__main__":
+    # Ensure proper command-line usage
+    if len(sys.argv) < 2:
+        print("Usage: python cachefilter.py <input-file> [--debug]")
+        sys.exit(1)
+
+    input_file = sys.argv[1]
+    debug_flag = sys.argv[2] if len(sys.argv) > 2 else None
+    output_file = test = "./output/" + input_file.split("/")[-1].split(".")[0] + ".cpp"
+
+    if debug_flag is not None and debug_flag in "--debug":
+        debug = True
+    else:
+        debug = False
+
+    parse(input_file)
+
+    if debug:
+        with open(output_file, "w", encoding="utf-8") as file:
+            print(f"Writing filtered ObjectScript to file: {output_file}")
+            file.write(file_content)
+    else:
+        sys.stdout.buffer.write(file_content.encode('utf-8'))
+        sys.stdout.flush()

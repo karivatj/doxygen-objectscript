@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ObjectScript Filter: Member List</title>
+<title>ObjectScript Filter: Doxygen Filter for ObjectScript</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -66,7 +66,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
-$(document).ready(function(){initNavTree('classObjectScript_1_1Lookup1.html',''); initResizable(); });
+$(document).ready(function(){initNavTree('md_README.html',''); initResizable(); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -84,20 +84,47 @@ $(document).ready(function(){initNavTree('classObjectScript_1_1Lookup1.html','')
 </iframe>
 </div>
 
-<div class="header">
+<div class="PageDoc"><div class="header">
   <div class="headertitle">
-<div class="title">ObjectScript::Lookup1 Member List</div>  </div>
+<div class="title">Doxygen Filter for ObjectScript </div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>This is the complete list of members for <a class="el" href="classObjectScript_1_1Lookup1.html">ObjectScript::Lookup1</a>, including all inherited members.</p>
-<table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="classObjectScript_1_1Lookup1.html#a3e972b0023ab54aca22e8d4657264e22">DisplayLine</a>(id As %Integer)</td><td class="entry"><a class="el" href="classObjectScript_1_1Lookup1.html">ObjectScript::Lookup1</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">static</span></td></tr>
-  <tr><td class="entry"><a class="el" href="classObjectScript_1_1Lookup1.html#a3a657cca8c28abfa931e801e463feaed">DOB</a>(intdob As %Date)</td><td class="entry"><a class="el" href="classObjectScript_1_1Lookup1.html">ObjectScript::Lookup1</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">static</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classObjectScript_1_1Lookup1.html#a4950b97a080b0b484250b0613509de9c">GetInput</a>(Output type As %String, Output search As %String)</td><td class="entry"><a class="el" href="classObjectScript_1_1Lookup1.html">ObjectScript::Lookup1</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">static</span></td></tr>
-  <tr><td class="entry"><a class="el" href="classObjectScript_1_1Lookup1.html#a6303003ee4a0fed0192d3d5332d6863f">Help</a>()</td><td class="entry"><a class="el" href="classObjectScript_1_1Lookup1.html">ObjectScript::Lookup1</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">static</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classObjectScript_1_1Lookup1.html#aa9a1cc7f8480bd8c5c119f2ecb16eea9">Main</a>()</td><td class="entry"><a class="el" href="classObjectScript_1_1Lookup1.html">ObjectScript::Lookup1</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">static</span></td></tr>
-</table></div><!-- contents -->
+<div class="textblock"><p>This Doxygen filter allows you to generate documentation from ObjectScript code by converting it into quasi-C++ syntax and then providing it to Doxygen for further processing. The filter is written in Python.</p>
+<h1><a class="anchor" id="autotoc_md2"></a>
+Usage and Test</h1>
+<ol type="1">
+<li>Clone or download this repository to your local machine.</li>
+<li>Make sure you have Python 3 installed on your system.</li>
+<li>Run the filter script by executing the following command:</li>
+</ol>
+<div class="fragment"><div class="line">python cachefilter.py &lt;input-file&gt; [--debug]</div>
+</div><!-- fragment --><p>Replace <code>&lt;input-file&gt;</code> with the path to your ObjectScript code file. Optionally, you can use the <code>--debug</code> flag to generate a separate output file for debugging purposes. Omitting &ndash;debug will output the transformed class to stdout. This is the mode that is used when using the filter together with Doxygen.</p>
+<ol type="1">
+<li>The filter will process the ObjectScript code and convert it into C++-like code. If you used the <code>--debug</code> flag, you'll find the output in the <code>./output/</code> folder with the same name as your input file but with a <code>.cpp</code> extension.</li>
+</ol>
+<h1><a class="anchor" id="autotoc_md3"></a>
+Generating documentation with Doxygen</h1>
+<ol type="1">
+<li>Make sure you have Doxygen installed on your system. If not, you can download and install it from <a href="https://www.doxygen.nl/download.html">Doxygen's official website</a>.</li>
+<li>Run Doxygen in the root of the project to generate the documentation. You can use the following command:</li>
+</ol>
+<div class="fragment"><div class="line">doxygen Doxyfile</div>
+</div><!-- fragment --><ol type="1">
+<li>The generated documentation will be placed in the <code>docs/html/</code> folder.</li>
+</ol>
+<h2><a class="anchor" id="autotoc_md4"></a>
+Sample Code</h2>
+<p>The <code>src/</code> folder contains some example code you can use to test the implementation. The code has been fetched from <a href="https://github.com/intersystems/Samples-ObjectScript">InterSystems Samples-ObjectScript repository</a>.</p>
+<h1><a class="anchor" id="autotoc_md5"></a>
+Summary</h1>
+<p>The filter introduced here will provide the means to use Doxygen to generate documentation from ObjectScript classes.</p>
+<p>Please note that this filter provides basic functionality for ObjectScript to C++ conversion for Doxygen. You may need to modify or extend it to meet your specific project's needs.</p>
+<h1><a class="anchor" id="autotoc_md6"></a>
+Documentation</h1>
+<p>Documentation created from this repository can be found on this project's <a href="https://karivatj.github.io/doxygen-objectscript">GitHub Pages</a>. Please explore to see an example of the documentation that can be created from your ObjectScript classes with Doxygen.</p>
+<p>If you have any questions or need assistance, please don't hesitate to reach out! </p>
+</div></div><!-- contents -->
+</div><!-- PageDoc -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

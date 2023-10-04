@@ -24,7 +24,16 @@
 */
 var NAVTREE =
 [
-  [ "My Project", "index.html", [
+  [ "ObjectScript Filter", "index.html", [
+    [ "Main page", "index.html", null ],
+    [ "Doxygen Filter for ObjectScript", "md_README.html", [
+      [ "Usage and Test", "md_README.html#autotoc_md2", null ],
+      [ "Generating documentation with Doxygen", "md_README.html#autotoc_md3", [
+        [ "Sample Code", "md_README.html#autotoc_md4", null ]
+      ] ],
+      [ "Summary", "md_README.html#autotoc_md5", null ],
+      [ "Documentation", "md_README.html#autotoc_md6", null ]
+    ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],
